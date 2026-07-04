@@ -1,0 +1,25 @@
+---
+Language: Cpp
+
+# 150 chars per line
+ColumnLimit: 150
+
+# Function parameters declaration on a new line
+BinPackParameters: false
+
+# Space inside declaration brakets E.g. int i{ 10 }
+Cpp11BracedListStyle: false
+
+# = statements aligned on column
+AlignConsecutiveAssignments: true
+
+# Every object initializer is on a new line 
+BreakConstructorInitializers: BeforeComma
+
+# Set namespace comment when closing it
+FixNamespaceComments: true
+
+# Do not indent namespaces
+NamespaceIndentation: None
+
+---

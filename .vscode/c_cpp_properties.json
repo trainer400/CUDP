@@ -1,0 +1,23 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "path": [
+          "${workspaceFolder}/src",
+          "${workspaceFolder}/lib",
+          "${workspaceFolder}/lib/**"
+        ],
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+          "${workspaceFolder}/src",
+          "${workspaceFolder}/lib",
+          "${workspaceFolder}/lib/**"
+      ],
+      "cppStandard": "c++20",
+      "compilerPath": "/bin/g++",
+      "name": "CUDP"
+    }
+  ],
+  "version": 4
+}
