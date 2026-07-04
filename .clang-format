@@ -21,5 +21,3 @@ FixNamespaceComments: true
 
 # Do not indent namespaces
 NamespaceIndentation: None
-
----
