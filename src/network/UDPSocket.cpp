@@ -8,7 +8,7 @@ UDPSocket::UDPSocket(asio::io_context &p_io_context, asio::ip::udp::endpoint p_e
     , m_endpoint(p_endpoint)
     , m_socket(m_io_context, m_endpoint) {}
 
-void UDPSocket::setOnSendCallback(std::function<void(std::unique_ptr<UDPPacket>)> p_callback) {
+void UDPSocket::setOnSendCallback(std::function<void(std::unique_ptr<UDPPacket>, asio::error_code)> p_callback) {
   std::scoped_lock<std::mutex> l(m_send_callback_mutex);
   m_send_callback = std::move(p_callback);
 }
@@ -39,9 +39,6 @@ bool UDPSocket::asyncSend(asio::ip::udp::endpoint p_destination, std::unique_ptr
 
   // Create the send function callback
   std::function<void(const asio::error_code &, std::size_t)> callback = [self](const asio::error_code &p_error, std::size_t) {
-    // Ignore the send error TODO: think about it
-    (void)p_error;
-
     // Take back the borrowed packet before allowing another send to start
     std::unique_ptr<UDPPacket> send_packet;
     {
@@ -53,7 +50,7 @@ bool UDPSocket::asyncSend(asio::ip::udp::endpoint p_destination, std::unique_ptr
     self->m_send_operation_active = false;
 
     // Copy the callback while protected, then invoke user code without internal locks
-    std::function<void(std::unique_ptr<UDPPacket>)> send_callback;
+    std::function<void(std::unique_ptr<UDPPacket>, asio::error_code)> send_callback;
     {
       std::scoped_lock<std::mutex> l(self->m_send_callback_mutex);
       send_callback = self->m_send_callback;
@@ -61,7 +58,7 @@ bool UDPSocket::asyncSend(asio::ip::udp::endpoint p_destination, std::unique_ptr
 
     // Call the user callback
     if (send_callback)
-      send_callback(std::move(send_packet));
+      send_callback(std::move(send_packet), p_error);
   };
 
   // Send the packet if possible

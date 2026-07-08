@@ -38,11 +38,12 @@ public:
   }
 
   /**
-   * @brief Sets the function that is called on send success
+   * @brief Sets the function that is called on send completion
    * @param p_callback The function that needs to be called on "send" completion.
-   * The function must accept the previously borrowed buffer in return
+   * The function must accept the previously borrowed buffer in return and the
+   * asio error code produced by the operation
    */
-  void setOnSendCallback(std::function<void(std::unique_ptr<UDPPacket>)> p_callback);
+  void setOnSendCallback(std::function<void(std::unique_ptr<UDPPacket>, asio::error_code)> p_callback);
 
   /**
    * @brief Sets the function that is called when a packet is received
@@ -103,7 +104,7 @@ private:
   std::atomic<bool> m_receive_operation_active = false;
 
   // Receive/send callback functions
-  std::function<void(std::unique_ptr<UDPPacket>)> m_send_callback;
+  std::function<void(std::unique_ptr<UDPPacket>, asio::error_code)> m_send_callback;
   std::function<void(std::unique_ptr<UDPPacket>, uint32_t, asio::error_code)> m_receive_callback;
 
   // Callbacks synchronization mutexes
