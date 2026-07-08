@@ -19,6 +19,19 @@ void UDPSocket::setOnReceiveCallback(std::function<void(std::unique_ptr<UDPPacke
   m_receive_callback = std::move(p_callback);
 }
 
+bool UDPSocket::close() {
+  std::scoped_lock<std::mutex> l(m_socket_mutex);
+
+  // Check if the socket is already closed
+  if (!m_socket.is_open())
+    return true;
+
+  // Close the socket avoiding any exception from ASIO
+  asio::error_code error;
+  m_socket.close(error);
+  return !error;
+}
+
 bool UDPSocket::asyncSend(asio::ip::udp::endpoint p_destination, std::unique_ptr<UDPPacket> &p_tx_buffer, uint32_t p_size) {
   // Invalid input is rejected before borrowing the packet, so the caller keeps ownership
   if (p_tx_buffer == nullptr || p_size > UDPPacket::MAX_UDP_PKT_SIZE)

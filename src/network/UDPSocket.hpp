@@ -54,6 +54,15 @@ public:
   void setOnReceiveCallback(std::function<void(std::unique_ptr<UDPPacket>, uint32_t, asio::error_code)> p_callback);
 
   /**
+   * @brief Closes the UDP socket and cancels any pending asynchronous operation.
+   * Pending operation callbacks may still be invoked with the asio error code produced
+   * by the close operation
+   *
+   * @return True if the socket is already closed or has been closed successfully, false otherwise
+   */
+  [[nodiscard]] bool close();
+
+  /**
    * @brief Send to the specified destination endpoint a packet. The tx buffer is borrowed from the user
    * and will be returned once the asio send call has been completed.
    * If the operation cannot be started, the buffer remains owned by the caller and no callback is invoked.
