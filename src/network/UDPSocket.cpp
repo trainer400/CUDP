@@ -1,5 +1,6 @@
 #include <network/UDPSocket.hpp>
 
+#include <iostream>
 namespace cudp {
 namespace network {
 
@@ -57,8 +58,15 @@ bool UDPSocket::asyncSend(asio::ip::udp::endpoint p_destination, std::unique_ptr
     }
 
     // Call the user callback
-    if (send_callback)
-      send_callback(std::move(send_packet), p_error);
+    if (send_callback) {
+      try {
+        send_callback(std::move(send_packet), p_error);
+      } catch (const std::exception &e) {
+        std::cerr << "[UDPSocket] The user send-callback failed with an exception: " << e.what() << '\n';
+      } catch (...) {
+        std::cerr << "[UDPSocket] The user send-callback failed with an unknown exception" << '\n';
+      }
+    }
   };
 
   // Send the packet if possible
@@ -119,8 +127,15 @@ bool UDPSocket::asyncReceive(std::unique_ptr<UDPPacket> &p_rx_buffer) {
     }
 
     // Call the user callback if present
-    if (receive_callback)
-      receive_callback(std::move(receive_packet), p_len, p_error);
+    if (receive_callback) {
+      try {
+        receive_callback(std::move(receive_packet), p_len, p_error);
+      } catch (const std::exception &e) {
+        std::cerr << "[UDPSocket] The user receive-callback failed with an exception: " << e.what() << '\n';
+      } catch (...) {
+        std::cerr << "[UDPSocket] The user receive-callback failed with an unknown exception" << '\n';
+      }
+    }
   };
 
   // Receive the packet if possible
