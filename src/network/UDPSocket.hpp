@@ -38,22 +38,6 @@ public:
   }
 
   /**
-   * @brief Sets the function that is called on send completion
-   * @param p_callback The function that needs to be called on "send" completion.
-   * The function must accept the previously borrowed buffer in return and the
-   * asio error code produced by the operation
-   */
-  void setOnSendCallback(std::function<void(std::unique_ptr<UDPPacket>, asio::error_code)> p_callback);
-
-  /**
-   * @brief Sets the function that is called when a packet is received
-   * @param p_callback The function that needs to be called on "receive" completion.
-   * The function must accept the previously borrowed buffer in return, the amount
-   * of valid received bytes and the asio error code produced by the operation
-   */
-  void setOnReceiveCallback(std::function<void(std::unique_ptr<UDPPacket>, uint32_t, asio::error_code)> p_callback);
-
-  /**
    * @brief Closes the UDP socket and cancels any pending asynchronous operation.
    * Pending operation callbacks may still be invoked with the asio error code produced
    * by the close operation
@@ -72,9 +56,14 @@ public:
    * @param p_tx_buffer The buffer to be used to take the data to transmit. The pointer is emptied only
    * if the operation is accepted
    * @param p_size The amount of data to be sent (in bytes)
+   * @param p_callback The function called on send completion. The function receives
+   * the previously borrowed buffer and the asio error code produced by the operation
    * @return Result of the async send operation
    */
-  [[nodiscard]] bool asyncSend(asio::ip::udp::endpoint p_destination, std::unique_ptr<UDPPacket> &p_tx_buffer, uint32_t p_size);
+  [[nodiscard]] bool asyncSend(asio::ip::udp::endpoint p_destination,
+                               std::unique_ptr<UDPPacket> &p_tx_buffer,
+                               uint32_t p_size,
+                               std::function<void(std::unique_ptr<UDPPacket>, asio::error_code)> p_callback);
 
   /**
    * @brief Receive from any endpoint into the specified buffer. The rx buffer is borrowed from the user
@@ -84,9 +73,13 @@ public:
    *
    * @param p_rx_buffer The buffer to be used when writing received data. The pointer is emptied only
    * if the operation is accepted
+   * @param p_callback The function called on receive completion. The function receives
+   * the previously borrowed buffer, the amount of valid received bytes, the source
+   * endpoint and the asio error code produced by the operation
    * @return Result of the async receive operation
    */
-  [[nodiscard]] bool asyncReceive(std::unique_ptr<UDPPacket> &p_rx_buffer);
+  [[nodiscard]] bool asyncReceive(std::unique_ptr<UDPPacket> &p_rx_buffer,
+                                  std::function<void(std::unique_ptr<UDPPacket>, uint32_t, asio::ip::udp::endpoint, asio::error_code)> p_callback);
 
 private:
   /**
@@ -111,14 +104,6 @@ private:
   // cannot start simultaneously the same operation
   std::atomic<bool> m_send_operation_active    = false;
   std::atomic<bool> m_receive_operation_active = false;
-
-  // Receive/send callback functions
-  std::function<void(std::unique_ptr<UDPPacket>, asio::error_code)> m_send_callback;
-  std::function<void(std::unique_ptr<UDPPacket>, uint32_t, asio::error_code)> m_receive_callback;
-
-  // Callbacks synchronization mutexes
-  std::mutex m_send_callback_mutex;
-  std::mutex m_receive_callback_mutex;
 
   // Borrowed buffers synchronization mutexes
   std::mutex m_send_packet_mutex;
