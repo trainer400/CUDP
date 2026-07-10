@@ -7,6 +7,7 @@
 #include <mutex>
 
 // Project libraries
+#include <network/Transceiver.hpp>
 #include <network/UDPPacket.hpp>
 
 namespace cudp {
@@ -21,7 +22,7 @@ namespace network {
  * Additionally, the class forces the user to deal one by one message. The class does not
  * own a queue on purpose, so that the user has to maintain and manage its own
  */
-class UDPSocket : public std::enable_shared_from_this<UDPSocket> {
+class UDPSocket : public Transceiver, public std::enable_shared_from_this<UDPSocket> {
 public:
   /**
    * @brief Creates a UDPSocket object owned by a shared pointer
@@ -44,7 +45,7 @@ public:
    *
    * @return True if the socket is already closed or has been closed successfully, false otherwise
    */
-  [[nodiscard]] bool close();
+  [[nodiscard]] bool close() override;
 
   /**
    * @brief Send to the specified destination endpoint a packet. The tx buffer is borrowed from the user
@@ -63,7 +64,7 @@ public:
   [[nodiscard]] bool asyncSend(asio::ip::udp::endpoint p_destination,
                                std::unique_ptr<UDPPacket> &p_tx_buffer,
                                uint32_t p_size,
-                               std::function<void(std::unique_ptr<UDPPacket>, asio::error_code)> p_callback);
+                               std::function<void(std::unique_ptr<UDPPacket>, asio::error_code)> p_callback) override;
 
   /**
    * @brief Receive from any endpoint into the specified buffer. The rx buffer is borrowed from the user
@@ -79,7 +80,7 @@ public:
    * @return Result of the async receive operation
    */
   [[nodiscard]] bool asyncReceive(std::unique_ptr<UDPPacket> &p_rx_buffer,
-                                  std::function<void(std::unique_ptr<UDPPacket>, uint32_t, asio::ip::udp::endpoint, asio::error_code)> p_callback);
+                                  std::function<void(std::unique_ptr<UDPPacket>, uint32_t, asio::ip::udp::endpoint, asio::error_code)> p_callback) override;
 
 private:
   /**
