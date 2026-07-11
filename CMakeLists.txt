@@ -6,6 +6,7 @@ project("CUDP")
 
 set(NETWORK
     ${CMAKE_CURRENT_SOURCE_DIR}/src/network/UDPSocket.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/network/MockUDPSocket.cpp
 )
 
 include_directories(catch_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -13,8 +14,8 @@ include_directories(catch_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 # Tests
 find_package(Catch2 3 REQUIRED)
 add_executable(catch_tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/CircularBufferTests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/MockUDPSocketTest.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/network/MockUDPSocket.cpp
     ${NETWORK}
 )
 target_link_libraries(catch_tests PRIVATE Catch2::Catch2WithMain)
