@@ -26,6 +26,14 @@ public:
   CircularBuffer(uint32_t p_element_size);
 
   /**
+   * @brief Get the circular buffer array size
+   */
+  uint32_t size() {
+    std::scoped_lock l(m_buffer_mutex);
+    return m_buffer.size() - 1;
+  }
+
+  /**
    * @brief Tries to emplace an element T that needs to be copyable.
    * The emplace operation might fail due to limited space inside the buffer
    */
@@ -48,7 +56,7 @@ private:
 };
 
 // The usage of a +1 element is the sentinel technique, which allows the buffer
-// to distinguish the cases in which the buffer is full/empty. The +1 cell remains 
+// to distinguish the cases in which the buffer is full/empty. The +1 cell remains
 // always not used
 template <typename T>
 CircularBuffer<T>::CircularBuffer(uint32_t p_element_size)
@@ -57,7 +65,7 @@ CircularBuffer<T>::CircularBuffer(uint32_t p_element_size)
 template <typename T> bool CircularBuffer<T>::tryEnqueue(const T &p_t) {
   std::scoped_lock lock(m_buffer_mutex);
 
-  // The next position of the buffer will be the starting one (hence the buffer is full). A 
+  // The next position of the buffer will be the starting one (hence the buffer is full). A
   // sentinel space is present (and not used) to distinguish the two cases (buffer full and buffer empty).
   // In this case the buffer full implies the usage of the next end_index
   const uint32_t next_end_index = static_cast<uint32_t>((static_cast<typename std::vector<T>::size_type>(m_end_index) + 1U) % m_buffer.size());
