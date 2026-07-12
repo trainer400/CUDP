@@ -23,7 +23,7 @@ public:
    * @brief Creates a circular buffer object that contains N elements as the
    * p_element_size parameter specifies
    */
-  CircularBuffer(uint32_t p_element_size);
+  explicit CircularBuffer(uint32_t p_element_size);
 
   /**
    * @brief Get the circular buffer array size
