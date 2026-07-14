@@ -84,7 +84,7 @@ public:
 
 private:
   // Entry that represents an enqueued packet ready to be sent. The index
-  // refers to the std::array memory that stores al the tx buffers
+  // refers to the std::array memory that stores all the tx buffers
   struct QueuedPacket {
     uint32_t m_buffer_index = 0U;
     uint32_t m_size         = 0U;
@@ -104,6 +104,7 @@ private:
     // TX data buffers that manage the order in which the packets have to be delivered and their memory addresses
     std::array<std::unique_ptr<UDPPacket>, CONNECTION_BUFFER_COUNT> m_send_buffers;
     data::CircularBuffer<QueuedPacket> m_pending_packets{ CONNECTION_BUFFER_COUNT };
+    uint32_t m_next_send_buffer = 0U;
   };
 
   /**

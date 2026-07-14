@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 project("CUDP")
 
 set(NETWORK
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/network/CUDP.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/network/UDPSocket.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/network/MockUDPSocket.cpp
 )
