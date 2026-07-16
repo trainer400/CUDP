@@ -45,6 +45,12 @@ public:
    */
   std::optional<T> dequeue();
 
+  /**
+   * @brief Returns a copy of the oldest element without removing it.
+   * If the buffer is empty, the optional is returned void
+   */
+  std::optional<T> peek();
+
 private:
   // Circular buffer memory
   std::vector<T> m_buffer;
@@ -91,6 +97,17 @@ template <typename T> std::optional<T> CircularBuffer<T>::dequeue() {
   std::optional<T> element(m_buffer[m_start_index]);
   m_start_index = static_cast<uint32_t>((static_cast<typename std::vector<T>::size_type>(m_start_index) + 1U) % m_buffer.size());
   return element;
+}
+
+template <typename T> std::optional<T> CircularBuffer<T>::peek() {
+  std::scoped_lock lock(m_buffer_mutex);
+
+  // The buffer is empty
+  if (m_start_index == m_end_index) {
+    return std::nullopt;
+  }
+
+  return m_buffer[m_start_index];
 }
 
 } // namespace data

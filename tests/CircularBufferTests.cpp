@@ -49,6 +49,21 @@ TEST_CASE("CircularBuffer dequeues elements in FIFO order", "[CircularBuffer][fi
   REQUIRE_FALSE(buffer.dequeue().has_value());
 }
 
+TEST_CASE("CircularBuffer peek preserves the oldest element", "[CircularBuffer][peek]") {
+  cudp::data::CircularBuffer<int> buffer(2);
+
+  REQUIRE_FALSE(buffer.peek().has_value());
+  REQUIRE(buffer.tryEnqueue(10));
+  REQUIRE(buffer.tryEnqueue(20));
+
+  REQUIRE(buffer.peek() == 10);
+  REQUIRE(buffer.peek() == 10);
+  REQUIRE(buffer.dequeue() == 10);
+  REQUIRE(buffer.peek() == 20);
+  REQUIRE(buffer.dequeue() == 20);
+  REQUIRE_FALSE(buffer.peek().has_value());
+}
+
 TEST_CASE("CircularBuffer does not overwrite elements when full", "[CircularBuffer][capacity]") {
   cudp::data::CircularBuffer<int> buffer(2);
 
