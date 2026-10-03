@@ -55,7 +55,7 @@ public:
    * @param p_handler User-owned connection handler shared with the multiplexer
    * @return False if the handler is null, the endpoint is already registered, or CUDP is closed
    */
-  [[nodiscard]] bool registerConnection(asio::ip::udp::endpoint p_endpoint, std::shared_ptr<ConnectionHandler> p_handler);
+  [[nodiscard]] bool registerConnection(const asio::ip::udp::endpoint& p_endpoint, std::shared_ptr<ConnectionHandler> p_handler);
 
   /**
    * @brief Removes a registered connection and discards its queued messages
