@@ -10,13 +10,12 @@
 #include <memory>
 #include <mutex>
 #include <set>
-#include <vector>
 
 // Project libraries
 #include <data/CircularBuffer.hpp>
 #include <network/ConnectionHandler.hpp>
+#include <network/Transceiver.hpp>
 #include <network/UDPPacket.hpp>
-#include <network/UDPSocket.hpp>
 
 namespace cudp {
 namespace network {
@@ -125,34 +124,27 @@ private:
   void handleReceive(std::unique_ptr<UDPPacket> p_packet, uint32_t p_size, asio::ip::udp::endpoint p_source, asio::error_code p_error);
 
   /**
-   * @brief Starts the next fair transmission when the socket is idle. 
+   * @brief Starts the next fair transmission when the socket is idle.
    * The send operation might fail in presence of already pending TX packets
    */
   void trySendNext();
 
-  /**
-   * @brief Reclaims a transmitted buffer and advances the scheduler which
-   * will try to send the next enqueued packet
-   */
-  void
-  handleSend(std::shared_ptr<ConnectionState> p_connection, uint32_t p_buffer_index, std::unique_ptr<UDPPacket> p_packet, asio::error_code p_error);
-
   // Thread safe socket that needs multiplexing
-  std::shared_ptr<UDPSocket> m_socket;
+  std::shared_ptr<Transceiver> m_socket;
   std::atomic<bool> m_closed = false;
 
   // User connection callback that needs to be called when a new connection appears
   std::function<void(asio::ip::udp::endpoint)> m_new_connection_callback;
-  
+
   // Internal connection states
   std::mutex m_state_mutex;
   std::map<asio::ip::udp::endpoint, std::shared_ptr<ConnectionState>> m_connections;
-  
+
   // Set of seen endpoints that need to be consulted when receiving a packet.
   // If it has already been seen (but not registered as a connection), the packet will be discarded.
   // TODO: implement a timer based persistence (after a certain amount, the endpoint will be discarded)
   std::set<asio::ip::udp::endpoint> m_seen_endpoints;
-  
+
   // Round robin index that indicates the last connection that has sent data
   std::size_t m_round_robin_index = 0U;
   bool m_send_active              = false;
