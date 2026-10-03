@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -33,17 +34,15 @@ public:
 
   /**
    * @brief Creates the CUDP multiplexer and starts its continuous asynchronous receive
-   * @param p_io_context ASIO context used by the owned UDP socket
-   * @param p_local_endpoint Local endpoint on which the socket is bound
+   * @param transceiver Transceiver that will be used by the multiplexer object to communicate
    * @param p_new_connection_callback Function notified with a previously unseen endpoint
    * @return Shared pointer owning the created multiplexer
    *
    * The callback may synchronously register the endpoint. In that case, the
    * datagram that caused the notification is delivered to the new handler.
    */
-  [[nodiscard]] static std::shared_ptr<CUDP> create(asio::io_context &p_io_context,
-                                                    asio::ip::udp::endpoint p_local_endpoint,
-                                                    std::function<void(asio::ip::udp::endpoint)> p_new_connection_callback);
+  [[nodiscard]] static std::optional<std::shared_ptr<CUDP>> create(std::unique_ptr<Transceiver> p_transceiver,
+                                                                   std::function<void(asio::ip::udp::endpoint)> p_new_connection_callback);
 
   /**
    *  @brief Closes the socket and rejects subsequent sends.
@@ -109,9 +108,7 @@ private:
   /**
    * @brief Constructs the multiplexer; create() completes asynchronous setup
    */
-  CUDP(asio::io_context &p_io_context,
-       asio::ip::udp::endpoint p_local_endpoint,
-       std::function<void(asio::ip::udp::endpoint)> p_new_connection_callback);
+  CUDP(std::unique_ptr<Transceiver> p_transceiver, std::function<void(asio::ip::udp::endpoint)> p_new_connection_callback);
 
   /**
    * @brief Submits the owned receive buffer to the UDP socket
@@ -130,7 +127,7 @@ private:
   void trySendNext();
 
   // Thread safe socket that needs multiplexing
-  std::shared_ptr<Transceiver> m_socket;
+  std::unique_ptr<Transceiver> m_socket;
   std::atomic<bool> m_closed = false;
 
   // User connection callback that needs to be called when a new connection appears
