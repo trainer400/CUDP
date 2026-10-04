@@ -101,7 +101,7 @@ private:
   /**
    * @brief Constructs the multiplexer; create() completes asynchronous setup
    */
-  CUDP(std::unique_ptr<Transceiver> p_transceiver, std::function<void(asio::ip::udp::endpoint)> p_new_connection_callback);
+  CUDP(std::shared_ptr<Transceiver> p_transceiver, std::function<void(asio::ip::udp::endpoint)> p_new_connection_callback);
 
   /**
    * @brief Submits the owned receive buffer to the UDP socket

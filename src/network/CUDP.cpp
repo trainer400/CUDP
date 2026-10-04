@@ -9,11 +9,14 @@ std::optional<std::shared_ptr<CUDP>> CUDP::create(std::shared_ptr<Transceiver> p
   if (!p_transceiver || !p_new_connection_callback)
     return std::nullopt;
 
-  return std::make_shared<CUDP>(p_transceiver, p_new_connection_callback);
+  // IMPORTANT: Create a shared_ptr specifically using the new operator to avoid weak pointer holding
+  // its ownership on destruction. This leverages the difference between make_shared and shared_ptr(new ...)
+  // TODO: test that with a catch test
+  return std::shared_ptr<CUDP>(new CUDP(p_transceiver, p_new_connection_callback));
 }
 
-CUDP::CUDP(std::unique_ptr<Transceiver> p_transceiver, std::function<void(asio::ip::udp::endpoint)> p_new_connection_callback)
-    : m_socket(std::move(p_transceiver))
+CUDP::CUDP(std::shared_ptr<Transceiver> p_transceiver, std::function<void(asio::ip::udp::endpoint)> p_new_connection_callback)
+    : m_socket(p_transceiver)
     , m_new_connection_callback(p_new_connection_callback) {}
 
 CUDP::~CUDP() {
@@ -36,9 +39,12 @@ bool CUDP::registerConnection(const asio::ip::udp::endpoint &p_endpoint, std::sh
     return false;
 
   // Under mutex add the new connection
-  std::shared_ptr<ConnectionState> new_connection_state = std::shared_ptr<ConnectionState>(new ConnectionState(p_handler));
+  std::shared_ptr<ConnectionState> new_connection_state = std::make_shared<ConnectionState>(p_handler);
   m_connections.emplace(std::make_pair(p_endpoint, new_connection_state));
   m_seen_endpoints.emplace(p_endpoint);
+
+  // Initialize the connection handler
+  p_handler->init(p_endpoint, weak_from_this());
 }
 
 bool CUDP::unregisterConnection(const asio::ip::udp::endpoint &p_endpoint) {
