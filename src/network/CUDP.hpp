@@ -41,7 +41,7 @@ public:
    * The callback may synchronously register the endpoint. In that case, the
    * datagram that caused the notification is delivered to the new handler.
    */
-  [[nodiscard]] static std::optional<std::shared_ptr<CUDP>> create(std::unique_ptr<Transceiver> p_transceiver,
+  [[nodiscard]] static std::optional<std::shared_ptr<CUDP>> create(std::shared_ptr<Transceiver> p_transceiver,
                                                                    std::function<void(asio::ip::udp::endpoint)> p_new_connection_callback);
 
   /**
@@ -120,7 +120,7 @@ private:
   void trySendNext();
 
   // Thread safe socket that needs multiplexing
-  std::unique_ptr<Transceiver> m_socket;
+  std::shared_ptr<Transceiver> m_socket;
   std::atomic<bool> m_closed = false;
 
   // User connection callback that needs to be called when a new connection appears

@@ -3,13 +3,13 @@
 namespace cudp {
 namespace network {
 
-std::optional<std::shared_ptr<CUDP>> CUDP::create(std::unique_ptr<Transceiver> p_transceiver,
+std::optional<std::shared_ptr<CUDP>> CUDP::create(std::shared_ptr<Transceiver> p_transceiver,
                                                   std::function<void(asio::ip::udp::endpoint)> p_new_connection_callback) {
   // Check input validity before creating the object
   if (!p_transceiver || !p_new_connection_callback)
     return std::nullopt;
 
-  return std::make_shared<CUDP>(std::move(p_transceiver), p_new_connection_callback);
+  return std::make_shared<CUDP>(p_transceiver, p_new_connection_callback);
 }
 
 CUDP::CUDP(std::unique_ptr<Transceiver> p_transceiver, std::function<void(asio::ip::udp::endpoint)> p_new_connection_callback)
