@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstdint>
 #include <array>
+#include <cstdint>
 #include <tuple>
 
 namespace cudp {
@@ -12,6 +12,7 @@ struct UDPPacket {
 
   // Actual data buffer
   std::array<uint8_t, MAX_UDP_PKT_SIZE> m_packet_data = {};
+  size_t m_data_size                                  = 0;
 };
 
 } // namespace network

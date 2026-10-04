@@ -9,7 +9,7 @@ std::optional<std::shared_ptr<CUDP>> CUDP::create(std::unique_ptr<Transceiver> p
   if (!p_transceiver || !p_new_connection_callback)
     return std::nullopt;
 
-  return std::shared_ptr<CUDP>(new CUDP(std::move(p_transceiver), p_new_connection_callback));
+  return std::make_shared<CUDP>(std::move(p_transceiver), p_new_connection_callback);
 }
 
 CUDP::CUDP(std::unique_ptr<Transceiver> p_transceiver, std::function<void(asio::ip::udp::endpoint)> p_new_connection_callback)
@@ -44,6 +44,46 @@ bool CUDP::registerConnection(const asio::ip::udp::endpoint &p_endpoint, std::sh
 bool CUDP::unregisterConnection(const asio::ip::udp::endpoint &p_endpoint) {
   std::scoped_lock l(m_state_mutex);
   return m_connections.erase(p_endpoint) > 0;
+}
+
+bool CUDP::send(const asio::ip::udp::endpoint &p_destination, const uint8_t *p_data, uint32_t p_size) {
+  if (p_data == nullptr || p_size == 0 || p_size >= UDPPacket::MAX_UDP_PKT_SIZE)
+    return false;
+
+  // Gather the connection
+  std::shared_ptr<ConnectionState> connection;
+
+  {
+    // Find the corresponding iterator
+    std::scoped_lock l(m_state_mutex);
+    const auto &it = m_connections.find(p_destination);
+
+    // Connection not found
+    if (it == m_connections.end())
+      return false;
+
+    connection = it->second;
+  }
+
+  {
+    std::scoped_lock l(connection->m_mutex);
+
+    // Try to enqueue inside the circular buffer the send buffer index inside the array.
+    // That could fail since the queue may be full.
+    bool enqueue_result = connection->m_pending_packets.tryEnqueue(connection->m_next_send_buffer);
+
+    // Buffer is full
+    if (!enqueue_result)
+      return false;
+
+    // The buffer is not completely full, copy the new data inside the buffer slot
+    std::unique_ptr<UDPPacket> &buffer = connection->m_send_buffers.at(connection->m_next_send_buffer);
+    std::memcpy(buffer->m_packet_data.data(), p_data, p_size);
+    buffer->m_data_size = p_size;
+
+    // Update the next index
+    connection->m_next_send_buffer = (connection->m_next_send_buffer + 1) % connection->m_send_buffers.size();
+  }
 }
 
 } // namespace network

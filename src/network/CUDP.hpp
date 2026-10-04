@@ -6,10 +6,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <optional>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <set>
 
 // Project libraries
@@ -55,7 +55,7 @@ public:
    * @param p_handler User-owned connection handler shared with the multiplexer
    * @return False if the handler is null, the endpoint is already registered, or CUDP is closed
    */
-  [[nodiscard]] bool registerConnection(const asio::ip::udp::endpoint& p_endpoint, std::shared_ptr<ConnectionHandler> p_handler);
+  [[nodiscard]] bool registerConnection(const asio::ip::udp::endpoint &p_endpoint, std::shared_ptr<ConnectionHandler> p_handler);
 
   /**
    * @brief Removes a registered connection and discards its queued messages
@@ -81,13 +81,6 @@ public:
   [[nodiscard]] bool close();
 
 private:
-  // Entry that represents an enqueued packet ready to be sent. The index
-  // refers to the std::array memory that stores all the tx buffers
-  struct QueuedPacket {
-    uint32_t m_buffer_index = 0U;
-    uint32_t m_size         = 0U;
-  };
-
   // Single connection entry with handler and buffers
   struct ConnectionState {
     /**
@@ -101,7 +94,7 @@ private:
 
     // TX data buffers that manage the order in which the packets have to be delivered and their memory addresses
     std::array<std::unique_ptr<UDPPacket>, CONNECTION_BUFFER_COUNT> m_send_buffers;
-    data::CircularBuffer<QueuedPacket> m_pending_packets{ CONNECTION_BUFFER_COUNT };
+    data::CircularBuffer<uint32_t> m_pending_packets{ CONNECTION_BUFFER_COUNT };
     uint32_t m_next_send_buffer = 0U;
   };
 
