@@ -19,9 +19,11 @@ CUDP::CUDP(std::shared_ptr<Transceiver> p_transceiver, std::function<void(asio::
     : m_socket(p_transceiver)
     , m_new_connection_callback(p_new_connection_callback) {}
 
+CUDP::ConnectionState::ConnectionState(std::shared_ptr<ConnectionHandler> p_handler)
+    : m_handler(p_handler) {}
+
 CUDP::~CUDP() {
   m_socket->close();
-  m_closed = true;
 }
 
 bool CUDP::registerConnection(const asio::ip::udp::endpoint &p_endpoint, std::shared_ptr<ConnectionHandler> p_handler) {
@@ -90,6 +92,14 @@ bool CUDP::send(const asio::ip::udp::endpoint &p_destination, const uint8_t *p_d
     // Update the next index
     connection->m_next_send_buffer = (connection->m_next_send_buffer + 1) % connection->m_send_buffers.size();
   }
+}
+
+bool CUDP::close() {
+  // Set the closed flag to false directly
+  m_closed = true;
+
+  // Close the socket if not already closed
+  return m_socket->close();
 }
 
 } // namespace network
