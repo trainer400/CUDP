@@ -22,9 +22,7 @@ CUDP::CUDP(std::shared_ptr<Transceiver> p_transceiver, std::function<void(asio::
 CUDP::ConnectionState::ConnectionState(std::shared_ptr<ConnectionHandler> p_handler)
     : m_handler(p_handler) {}
 
-CUDP::~CUDP() {
-  m_socket->close();
-}
+CUDP::~CUDP() { m_socket->close(); }
 
 bool CUDP::registerConnection(const asio::ip::udp::endpoint &p_endpoint, std::shared_ptr<ConnectionHandler> p_handler) {
   // Socket is closed
@@ -100,6 +98,22 @@ bool CUDP::close() {
 
   // Close the socket if not already closed
   return m_socket->close();
+}
+
+void CUDP::startReceive() {
+  std::scoped_lock l(m_receive_mutex);
+
+  // If the receiving buffer packet is not owned return immediately (probably a receive operation is already pending)
+  if (!m_receive_packet)
+    return;
+
+  // Get the shared object pointer to avoid having a callback that is called once the object is destroyed
+  auto self = shared_from_this();
+
+  // Start the async receive operation with the transceiver. Give ownership of the buffer
+  // to the object and expect the callback to be called at some point
+  m_socket->asyncReceive(m_receive_packet, [self](std::unique_ptr<UDPPacket> p_packet, uint32_t p_size, asio::ip::udp::endpoint p_source,
+                                                  asio::error_code p_error) { self->handleReceive(std::move(p_packet), p_size, p_source, p_error); });
 }
 
 } // namespace network
