@@ -57,8 +57,24 @@ bool CUDP::registerConnection(const asio::ip::udp::endpoint &p_endpoint, std::sh
 }
 
 bool CUDP::unregisterConnection(const asio::ip::udp::endpoint &p_endpoint) {
-  std::scoped_lock l(m_state_mutex);
-  return m_connections.erase(p_endpoint) > 0;
+  bool result = false;
+
+  // Gather the connection
+  std::optional<std::shared_ptr<ConnectionState>> connection;
+  {
+    std::scoped_lock l(m_state_mutex);
+    auto connection_it = m_connections.find(p_endpoint);
+    connection         = connection_it != m_connections.end() ? connection_it->second : connection;
+  
+    // Erase the connection from the map
+    result = m_connections.erase(p_endpoint) > 0;
+  }
+
+  // "Use" the connection object outside of the mutex and destroy it outside to avoid 
+  // potential circular dependencies (on m_state_mutex) during destruction
+  (void)connection;
+
+  return result;
 }
 
 bool CUDP::send(const asio::ip::udp::endpoint &p_destination, const uint8_t *p_data, uint32_t p_size) {
