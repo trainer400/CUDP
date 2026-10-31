@@ -1,5 +1,6 @@
 #include <network/CUDP.hpp>
 
+#include <utils/ScopeExit.hpp>
 namespace cudp {
 namespace network {
 
@@ -118,7 +119,46 @@ void CUDP::startReceive() {
   });
 }
 
-void CUDP::handleReceive(std::unique_ptr<UDPPacket> p_packet, uint32_t p_size, asio::ip::udp::endpoint p_source, asio::error_code p_error) {}
+void CUDP::handleReceive(std::unique_ptr<UDPPacket> p_packet, uint32_t p_size, asio::ip::udp::endpoint p_source, asio::error_code p_error) {
+  // Create the scope exit to call send the next message and startReceive every time the function terminates
+  auto scope_exit = utils::ScopeExit([&]() {
+    // Reclaim the packet ownership
+    m_receive_packet = std::move(p_packet);
+
+    // Send the next packet and start receiving again
+    trySendNext();
+    startReceive();
+  });
+
+  // Check that the receive operation went well
+  if (p_error)
+    return;
+
+  // Get the corresponding connection if existing
+  std::optional<std::shared_ptr<ConnectionState>> connection;
+  {
+    std::scoped_lock l(m_state_mutex);
+    auto connection_it = m_connections.find(p_source);
+    connection         = connection_it != m_connections.end() ? connection_it->second : connection;
+  }
+
+  // Call the new connection handler if not already present
+  if (!connection.has_value()) {
+    m_new_connection_callback(p_source);
+
+    // Get the corresponding connection if added by the callback
+    std::scoped_lock l(m_state_mutex);
+    auto connection_it = m_connections.find(p_source);
+    connection         = connection_it != m_connections.end() ? connection_it->second : connection;
+
+    // No connection added
+    if (!connection.has_value())
+      return;
+  }
+
+  // The connection is present, call the connection handler on message callback
+  connection.value()->m_handler->onMessage(p_packet->m_packet_data.data(), p_packet->m_data_size);
+}
 
 } // namespace network
 } // namespace cudp
