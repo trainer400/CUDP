@@ -130,11 +130,6 @@ private:
   std::mutex m_state_mutex;
   std::map<asio::ip::udp::endpoint, std::shared_ptr<ConnectionState>> m_connections;
 
-  // Set of seen endpoints that need to be consulted when receiving a packet.
-  // If it has already been seen (but not registered as a connection), the packet will be discarded.
-  // TODO: implement a timer based persistence (after a certain amount, the endpoint will be discarded)
-  std::set<asio::ip::udp::endpoint> m_seen_endpoints;
-
   // Round robin index that indicates the last connection that has sent data
   std::size_t m_round_robin_index = 0U;
   bool m_send_active              = false;

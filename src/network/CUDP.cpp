@@ -36,15 +36,10 @@ bool CUDP::registerConnection(const asio::ip::udp::endpoint &p_endpoint, std::sh
   if (!p_handler)
     return false;
 
-  // Lock the state mutex to fetch the set
-  std::scoped_lock l(m_state_mutex);
-  if (m_seen_endpoints.contains(p_endpoint))
-    return false;
-
   // Under mutex add the new connection
+  std::scoped_lock l(m_state_mutex);
   std::shared_ptr<ConnectionState> new_connection_state = std::make_shared<ConnectionState>(p_handler);
   m_connections.emplace(std::make_pair(p_endpoint, new_connection_state));
-  m_seen_endpoints.emplace(p_endpoint);
 
   // Initialize the connection handler
   p_handler->init(p_endpoint, weak_from_this());
@@ -122,6 +117,8 @@ void CUDP::startReceive() {
       self->handleReceive(std::move(p_packet), p_size, p_source, p_error);
   });
 }
+
+void CUDP::handleReceive(std::unique_ptr<UDPPacket> p_packet, uint32_t p_size, asio::ip::udp::endpoint p_source, asio::error_code p_error) {}
 
 } // namespace network
 } // namespace cudp
