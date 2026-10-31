@@ -132,7 +132,7 @@ void CUDP::startReceive() {
   std::scoped_lock l(m_receive_mutex);
 
   // If the receiving buffer packet is not owned return immediately (probably a receive operation is already pending)
-  if (!m_receive_packet && m_closed)
+  if (!m_receive_packet || m_closed)
     return;
 
   // Get the weak object pointer to allow the CUDP entity to be destroyed even in presence of a non completed asyncReceive
@@ -151,8 +151,11 @@ void CUDP::startReceive() {
 void CUDP::handleReceive(std::unique_ptr<UDPPacket> p_packet, asio::ip::udp::endpoint p_source, asio::error_code p_error) {
   // Create the scope exit to call send the next message and startReceive every time the function terminates
   auto scope_exit = utils::ScopeExit([&]() {
-    // Reclaim the packet ownership
-    m_receive_packet = std::move(p_packet);
+    {
+      // Reclaim the packet ownership
+      std::scoped_lock l(m_receive_mutex);
+      m_receive_packet = std::move(p_packet);
+    }
 
     // Send the next packet and start receiving again
     trySendNext();
