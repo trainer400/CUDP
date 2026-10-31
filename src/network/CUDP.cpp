@@ -17,7 +17,10 @@ std::optional<std::shared_ptr<CUDP>> CUDP::create(std::shared_ptr<Transceiver> p
 
 CUDP::CUDP(std::shared_ptr<Transceiver> p_transceiver, std::function<void(asio::ip::udp::endpoint)> p_new_connection_callback)
     : m_socket(p_transceiver)
-    , m_new_connection_callback(p_new_connection_callback) {}
+    , m_new_connection_callback(p_new_connection_callback) {
+  // Allocate the receive packet memory
+  m_receive_packet = std::make_unique<UDPPacket>();
+}
 
 CUDP::ConnectionState::ConnectionState(std::shared_ptr<ConnectionHandler> p_handler)
     : m_handler(p_handler) {}
