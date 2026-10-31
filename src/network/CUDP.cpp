@@ -79,7 +79,7 @@ bool CUDP::unregisterConnection(const asio::ip::udp::endpoint &p_endpoint) {
 }
 
 bool CUDP::send(const asio::ip::udp::endpoint &p_destination, const uint8_t *p_data, uint32_t p_size) {
-  if (p_data == nullptr || p_size == 0 || p_size >= UDPPacket::MAX_UDP_PKT_SIZE)
+  if (p_data == nullptr || p_size == 0 || p_size >= UDPPacket::MAX_UDP_PKT_SIZE || m_closed)
     return false;
 
   // Gather the connection
