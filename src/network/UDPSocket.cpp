@@ -89,7 +89,7 @@ bool UDPSocket::asyncSend(asio::ip::udp::endpoint p_destination,
 }
 
 bool UDPSocket::asyncReceive(std::unique_ptr<UDPPacket> &p_rx_buffer,
-                             std::function<void(std::unique_ptr<UDPPacket>, uint32_t, asio::ip::udp::endpoint, asio::error_code)> p_callback) {
+                             std::function<void(std::unique_ptr<UDPPacket>, asio::ip::udp::endpoint, asio::error_code)> p_callback) {
   // Invalid input is rejected before borrowing the packet, so the caller keeps ownership
   if (p_rx_buffer == nullptr)
     return false;
@@ -124,10 +124,13 @@ bool UDPSocket::asyncReceive(std::unique_ptr<UDPPacket> &p_rx_buffer,
         // Restore the possibility of receiveing data packages
         self->m_receive_operation_active = false;
 
+        // Set the received packet size
+        receive_packet->m_data_size = p_len;
+
         // Call the user callback if present
         if (receive_callback) {
           try {
-            receive_callback(std::move(receive_packet), p_len, std::move(receive_endpoint), p_error);
+            receive_callback(std::move(receive_packet), std::move(receive_endpoint), p_error);
           } catch (const std::exception &e) {
             std::cerr << "[UDPSocket] The user receive-callback failed with an exception: " << e.what() << '\n';
           } catch (...) {

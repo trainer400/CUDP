@@ -33,7 +33,7 @@ bool MockUDPSocket::asyncSend(asio::ip::udp::endpoint,
 }
 
 bool MockUDPSocket::asyncReceive(std::unique_ptr<UDPPacket> &p_rx_buffer,
-                                 std::function<void(std::unique_ptr<UDPPacket>, uint32_t, asio::ip::udp::endpoint, asio::error_code)> p_callback) {
+                                 std::function<void(std::unique_ptr<UDPPacket>, asio::ip::udp::endpoint, asio::error_code)> p_callback) {
   // "Enqueue" the async receive operation only the user passed a valid buffer
   if (p_rx_buffer == nullptr)
     return false;
@@ -85,7 +85,7 @@ bool MockUDPSocket::triggerReceive(uint32_t p_size, asio::ip::udp::endpoint p_so
   std::unique_ptr<UDPPacket> packet;
 
   // Copy the callback under lock if a receive operation is pending
-  std::function<void(std::unique_ptr<UDPPacket>, uint32_t, asio::ip::udp::endpoint, asio::error_code)> callback;
+  std::function<void(std::unique_ptr<UDPPacket>, asio::ip::udp::endpoint, asio::error_code)> callback;
   {
     std::scoped_lock<std::mutex> lock(m_mutex);
     if (!m_receive_pending)
@@ -99,7 +99,7 @@ bool MockUDPSocket::triggerReceive(uint32_t p_size, asio::ip::udp::endpoint p_so
   // Call the callback in a protected environment
   if (callback) {
     try {
-      callback(std::move(packet), p_size, std::move(p_source), p_error);
+      callback(std::move(packet), std::move(p_source), p_error);
     } catch (const std::exception &e) {
       std::cerr << "[MockUDPSocket] The user receive-callback failed with an exception: " << e.what() << '\n';
     } catch (...) {

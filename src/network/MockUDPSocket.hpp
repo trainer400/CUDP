@@ -30,7 +30,7 @@ public:
 
   [[nodiscard]] bool
   asyncReceive(std::unique_ptr<UDPPacket> &p_rx_buffer,
-               std::function<void(std::unique_ptr<UDPPacket>, uint32_t, asio::ip::udp::endpoint, asio::error_code)> p_callback) override;
+               std::function<void(std::unique_ptr<UDPPacket>, asio::ip::udp::endpoint, asio::error_code)> p_callback) override;
 
   /**
    * @brief Completes the pending send synchronously on the thread calling this method
@@ -56,7 +56,7 @@ private:
   std::unique_ptr<UDPPacket> m_send_packet;
   std::unique_ptr<UDPPacket> m_receive_packet;
   std::function<void(std::unique_ptr<UDPPacket>, asio::error_code)> m_send_callback;
-  std::function<void(std::unique_ptr<UDPPacket>, uint32_t, asio::ip::udp::endpoint, asio::error_code)> m_receive_callback;
+  std::function<void(std::unique_ptr<UDPPacket>, asio::ip::udp::endpoint, asio::error_code)> m_receive_callback;
 };
 
 } // namespace network

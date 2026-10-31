@@ -68,8 +68,8 @@ TEST_CASE("MockUDPSocket close leaves an accepted receive triggerable", "[MockUD
   cudp::network::MockUDPSocket socket;
   std::unique_ptr<cudp::network::UDPPacket> packet = makePacket();
   bool callback_called                             = false;
-  REQUIRE(socket.asyncReceive(packet, [&callback_called](std::unique_ptr<cudp::network::UDPPacket>, uint32_t, asio::ip::udp::endpoint,
-                                                         asio::error_code) { callback_called = true; }));
+  REQUIRE(socket.asyncReceive(
+      packet, [&callback_called](std::unique_ptr<cudp::network::UDPPacket>, asio::ip::udp::endpoint, asio::error_code) { callback_called = true; }));
 
   REQUIRE(socket.close());
   REQUIRE_FALSE(callback_called);
@@ -236,15 +236,14 @@ TEST_CASE("MockUDPSocket receive returns packet size source and error", "[MockUD
   asio::ip::udp::endpoint expected_source          = makeEndpoint(8080);
   asio::error_code expected_error                  = asio::error::message_size;
   bool callback_called                             = false;
-  REQUIRE(socket.asyncReceive(
-      packet, [&](std::unique_ptr<cudp::network::UDPPacket> p_packet, uint32_t p_size, asio::ip::udp::endpoint p_source, asio::error_code p_error) {
-        callback_called = true;
-        CHECK(p_packet.get() == packet_address);
-        CHECK(p_packet->m_packet_data[0] == 42);
-        CHECK(p_size == 17);
-        CHECK(p_source == expected_source);
-        CHECK(p_error == expected_error);
-      }));
+  REQUIRE(socket.asyncReceive(packet,
+                              [&](std::unique_ptr<cudp::network::UDPPacket> p_packet, asio::ip::udp::endpoint p_source, asio::error_code p_error) {
+                                callback_called = true;
+                                CHECK(p_packet.get() == packet_address);
+                                CHECK(p_packet->m_packet_data[0] == 42);
+                                CHECK(p_source == expected_source);
+                                CHECK(p_error == expected_error);
+                              }));
 
   REQUIRE(packet == nullptr);
   REQUIRE_FALSE(callback_called);
@@ -262,8 +261,8 @@ TEST_CASE("MockUDPSocket oversized receive trigger keeps the operation pending",
   cudp::network::MockUDPSocket socket;
   std::unique_ptr<cudp::network::UDPPacket> packet = makePacket();
   bool callback_called                             = false;
-  REQUIRE(socket.asyncReceive(packet, [&callback_called](std::unique_ptr<cudp::network::UDPPacket>, uint32_t, asio::ip::udp::endpoint,
-                                                         asio::error_code) { callback_called = true; }));
+  REQUIRE(socket.asyncReceive(
+      packet, [&callback_called](std::unique_ptr<cudp::network::UDPPacket>, asio::ip::udp::endpoint, asio::error_code) { callback_called = true; }));
 
   REQUIRE_FALSE(socket.triggerReceive(cudp::network::UDPPacket::MAX_UDP_PKT_SIZE + 1));
   REQUIRE_FALSE(callback_called);
@@ -286,8 +285,9 @@ TEST_CASE("MockUDPSocket receive callback runs on the trigger thread", "[MockUDP
   std::thread::id callback_thread;
   std::thread::id trigger_thread;
   bool trigger_result = false;
-  REQUIRE(socket.asyncReceive(packet, [&callback_thread](std::unique_ptr<cudp::network::UDPPacket>, uint32_t, asio::ip::udp::endpoint,
-                                                         asio::error_code) { callback_thread = std::this_thread::get_id(); }));
+  REQUIRE(socket.asyncReceive(packet, [&callback_thread](std::unique_ptr<cudp::network::UDPPacket>, asio::ip::udp::endpoint, asio::error_code) {
+    callback_thread = std::this_thread::get_id();
+  }));
 
   std::thread worker([&]() {
     trigger_thread = std::this_thread::get_id();
@@ -305,7 +305,7 @@ TEST_CASE("MockUDPSocket receive callback may enqueue another receive", "[MockUD
   std::unique_ptr<cudp::network::UDPPacket> first_packet  = makePacket();
   std::unique_ptr<cudp::network::UDPPacket> second_packet = makePacket();
   bool second_receive_accepted                            = false;
-  REQUIRE(socket.asyncReceive(first_packet, [&](std::unique_ptr<cudp::network::UDPPacket>, uint32_t, asio::ip::udp::endpoint, asio::error_code) {
+  REQUIRE(socket.asyncReceive(first_packet, [&](std::unique_ptr<cudp::network::UDPPacket>, asio::ip::udp::endpoint, asio::error_code) {
     second_receive_accepted = socket.asyncReceive(second_packet, {});
   }));
 
@@ -318,7 +318,7 @@ TEST_CASE("MockUDPSocket receive callback may enqueue another receive", "[MockUD
 TEST_CASE("MockUDPSocket catches a standard receive callback exception", "[MockUDPSocket][receive][exception]") {
   cudp::network::MockUDPSocket socket;
   std::unique_ptr<cudp::network::UDPPacket> packet = makePacket();
-  REQUIRE(socket.asyncReceive(packet, [](std::unique_ptr<cudp::network::UDPPacket>, uint32_t, asio::ip::udp::endpoint, asio::error_code) {
+  REQUIRE(socket.asyncReceive(packet, [](std::unique_ptr<cudp::network::UDPPacket>, asio::ip::udp::endpoint, asio::error_code) {
     throw std::runtime_error("receive failure");
   }));
 
@@ -328,8 +328,7 @@ TEST_CASE("MockUDPSocket catches a standard receive callback exception", "[MockU
 TEST_CASE("MockUDPSocket catches an unknown receive callback exception", "[MockUDPSocket][receive][exception]") {
   cudp::network::MockUDPSocket socket;
   std::unique_ptr<cudp::network::UDPPacket> packet = makePacket();
-  REQUIRE(
-      socket.asyncReceive(packet, [](std::unique_ptr<cudp::network::UDPPacket>, uint32_t, asio::ip::udp::endpoint, asio::error_code) { throw 42; }));
+  REQUIRE(socket.asyncReceive(packet, [](std::unique_ptr<cudp::network::UDPPacket>, asio::ip::udp::endpoint, asio::error_code) { throw 42; }));
 
   REQUIRE(socket.triggerReceive(0));
 }

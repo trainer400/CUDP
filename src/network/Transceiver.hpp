@@ -61,14 +61,13 @@ public:
    *
    * @param[in,out] p_rx_buffer Packet used as the receive buffer. It is moved from only when the
    * operation is accepted
-   * @param p_callback Completion function receiving the returned packet, number of valid bytes,
+   * @param p_callback Completion function receiving the returned packet,
    * source UDP endpoint, and ASIO error code. The function may be empty
    * @return True if the operation has been accepted; false if the buffer is null, the transceiver
    * is closed, or another receive is already pending
    */
-  [[nodiscard]] virtual bool
-  asyncReceive(std::unique_ptr<UDPPacket> &p_rx_buffer,
-               std::function<void(std::unique_ptr<UDPPacket>, uint32_t, asio::ip::udp::endpoint, asio::error_code)> p_callback) = 0;
+  [[nodiscard]] virtual bool asyncReceive(std::unique_ptr<UDPPacket> &p_rx_buffer,
+                                          std::function<void(std::unique_ptr<UDPPacket>, asio::ip::udp::endpoint, asio::error_code)> p_callback) = 0;
 };
 
 } // namespace network

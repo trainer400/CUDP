@@ -65,12 +65,12 @@ bool CUDP::unregisterConnection(const asio::ip::udp::endpoint &p_endpoint) {
     std::scoped_lock l(m_state_mutex);
     auto connection_it = m_connections.find(p_endpoint);
     connection         = connection_it != m_connections.end() ? connection_it->second : connection;
-  
+
     // Erase the connection from the map
     result = m_connections.erase(p_endpoint) > 0;
   }
 
-  // "Use" the connection object outside of the mutex and destroy it outside to avoid 
+  // "Use" the connection object outside of the mutex and destroy it outside to avoid
   // potential circular dependencies (on m_state_mutex) during destruction
   (void)connection;
 
@@ -139,15 +139,15 @@ void CUDP::startReceive() {
 
   // Start the async receive operation with the transceiver. Give ownership of the buffer
   // to the object and expect the callback to be called at some point
-  m_socket->asyncReceive(m_receive_packet, [weak_self](std::unique_ptr<UDPPacket> p_packet, uint32_t p_size, asio::ip::udp::endpoint p_source,
-                                                       asio::error_code p_error) {
-    std::shared_ptr<CUDP> self = weak_self.lock();
-    if (self)
-      self->handleReceive(std::move(p_packet), p_size, p_source, p_error);
-  });
+  m_socket->asyncReceive(m_receive_packet,
+                         [weak_self](std::unique_ptr<UDPPacket> p_packet, asio::ip::udp::endpoint p_source, asio::error_code p_error) {
+                           std::shared_ptr<CUDP> self = weak_self.lock();
+                           if (self)
+                             self->handleReceive(std::move(p_packet), p_source, p_error);
+                         });
 }
 
-void CUDP::handleReceive(std::unique_ptr<UDPPacket> p_packet, uint32_t p_size, asio::ip::udp::endpoint p_source, asio::error_code p_error) {
+void CUDP::handleReceive(std::unique_ptr<UDPPacket> p_packet, asio::ip::udp::endpoint p_source, asio::error_code p_error) {
   // Create the scope exit to call send the next message and startReceive every time the function terminates
   auto scope_exit = utils::ScopeExit([&]() {
     // Reclaim the packet ownership
@@ -187,6 +187,8 @@ void CUDP::handleReceive(std::unique_ptr<UDPPacket> p_packet, uint32_t p_size, a
   // The connection is present, call the connection handler on message callback
   connection.value()->m_handler->onMessage(p_packet->m_packet_data.data(), p_packet->m_data_size);
 }
+
+void CUDP::trySendNext() {}
 
 } // namespace network
 } // namespace cudp

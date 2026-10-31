@@ -80,7 +80,7 @@ public:
    * @return Result of the async receive operation
    */
   [[nodiscard]] bool asyncReceive(std::unique_ptr<UDPPacket> &p_rx_buffer,
-                                  std::function<void(std::unique_ptr<UDPPacket>, uint32_t, asio::ip::udp::endpoint, asio::error_code)> p_callback) override;
+                                  std::function<void(std::unique_ptr<UDPPacket>, asio::ip::udp::endpoint, asio::error_code)> p_callback) override;
 
 private:
   /**

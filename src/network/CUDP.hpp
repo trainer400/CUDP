@@ -111,7 +111,7 @@ private:
   /**
    *  @brief Processes one receive completion and rearms reception
    */
-  void handleReceive(std::unique_ptr<UDPPacket> p_packet, uint32_t p_size, asio::ip::udp::endpoint p_source, asio::error_code p_error);
+  void handleReceive(std::unique_ptr<UDPPacket> p_packet, asio::ip::udp::endpoint p_source, asio::error_code p_error);
 
   /**
    * @brief Starts the next fair transmission when the socket is idle.
