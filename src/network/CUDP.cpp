@@ -15,7 +15,7 @@ std::optional<std::shared_ptr<CUDP>> CUDP::create(std::shared_ptr<Transceiver> p
   // TODO: test that with a catch test
   std::shared_ptr<CUDP> result = std::shared_ptr<CUDP>(new CUDP(p_transceiver, p_new_connection_callback));
   result->startReceive();
-  
+
   return result;
 }
 
@@ -115,7 +115,7 @@ void CUDP::startReceive() {
   std::scoped_lock l(m_receive_mutex);
 
   // If the receiving buffer packet is not owned return immediately (probably a receive operation is already pending)
-  if (!m_receive_packet && !m_closed)
+  if (!m_receive_packet && m_closed)
     return;
 
   // Get the weak object pointer to allow the CUDP entity to be destroyed even in presence of a non completed asyncReceive
