@@ -24,7 +24,12 @@ CUDP::CUDP(std::shared_ptr<Transceiver> p_transceiver, std::function<void(asio::
 }
 
 CUDP::ConnectionState::ConnectionState(std::shared_ptr<ConnectionHandler> p_handler)
-    : m_handler(p_handler) {}
+    : m_handler(p_handler) {
+  // Allocate send buffer
+  for (uint32_t i = 0; i < CONNECTION_BUFFER_COUNT; i++) {
+    m_send_buffers.at(i) = std::make_unique<UDPPacket>();
+  }
+}
 
 CUDP::~CUDP() { m_socket->close(); }
 
@@ -89,6 +94,8 @@ bool CUDP::send(const asio::ip::udp::endpoint &p_destination, const uint8_t *p_d
     // Update the next index
     connection->m_next_send_buffer = (connection->m_next_send_buffer + 1) % connection->m_send_buffers.size();
   }
+
+  return true;
 }
 
 bool CUDP::close() {
