@@ -49,6 +49,8 @@ bool CUDP::registerConnection(const asio::ip::udp::endpoint &p_endpoint, std::sh
 
   // Initialize the connection handler
   p_handler->init(p_endpoint, weak_from_this());
+
+  return true;
 }
 
 bool CUDP::unregisterConnection(const asio::ip::udp::endpoint &p_endpoint) {
