@@ -48,10 +48,11 @@ bool CUDP::registerConnection(const asio::ip::udp::endpoint &p_endpoint, std::sh
   // Under mutex add the new connection
   std::scoped_lock l(m_state_mutex);
   std::shared_ptr<ConnectionState> new_connection_state = std::make_shared<ConnectionState>(p_handler);
-  m_connections.emplace(std::make_pair(p_endpoint, new_connection_state));
+  auto insertion_result                                 = m_connections.emplace(std::make_pair(p_endpoint, new_connection_state));
 
-  // Initialize the connection handler
-  p_handler->init(p_endpoint, weak_from_this());
+  // Initialize the connection handler only if it didn't exist before
+  if (insertion_result.second)
+    p_handler->init(p_endpoint, weak_from_this());
 
   return true;
 }
