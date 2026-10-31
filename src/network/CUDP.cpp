@@ -104,7 +104,7 @@ void CUDP::startReceive() {
   std::scoped_lock l(m_receive_mutex);
 
   // If the receiving buffer packet is not owned return immediately (probably a receive operation is already pending)
-  if (!m_receive_packet)
+  if (!m_receive_packet && !m_closed)
     return;
 
   // Get the shared object pointer to avoid having a callback that is called once the object is destroyed
