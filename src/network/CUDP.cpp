@@ -13,7 +13,10 @@ std::optional<std::shared_ptr<CUDP>> CUDP::create(std::shared_ptr<Transceiver> p
   // IMPORTANT: Create a shared_ptr specifically using the new operator to avoid weak pointer holding
   // its ownership on destruction. This leverages the difference between make_shared and shared_ptr(new ...)
   // TODO: test that with a catch test
-  return std::shared_ptr<CUDP>(new CUDP(p_transceiver, p_new_connection_callback));
+  std::shared_ptr<CUDP> result = std::shared_ptr<CUDP>(new CUDP(p_transceiver, p_new_connection_callback));
+  result->startReceive();
+  
+  return result;
 }
 
 CUDP::CUDP(std::shared_ptr<Transceiver> p_transceiver, std::function<void(asio::ip::udp::endpoint)> p_new_connection_callback)
@@ -31,7 +34,7 @@ CUDP::ConnectionState::ConnectionState(std::shared_ptr<ConnectionHandler> p_hand
   }
 }
 
-CUDP::~CUDP() { m_socket->close(); }
+CUDP::~CUDP() { close(); }
 
 bool CUDP::registerConnection(const asio::ip::udp::endpoint &p_endpoint, std::shared_ptr<ConnectionHandler> p_handler) {
   // Socket is closed
