@@ -107,13 +107,17 @@ void CUDP::startReceive() {
   if (!m_receive_packet && !m_closed)
     return;
 
-  // Get the shared object pointer to avoid having a callback that is called once the object is destroyed
-  auto self = shared_from_this();
+  // Get the weak object pointer to allow the CUDP entity to be destroyed even in presence of a non completed asyncReceive
+  auto weak_self = weak_from_this();
 
   // Start the async receive operation with the transceiver. Give ownership of the buffer
   // to the object and expect the callback to be called at some point
-  m_socket->asyncReceive(m_receive_packet, [self](std::unique_ptr<UDPPacket> p_packet, uint32_t p_size, asio::ip::udp::endpoint p_source,
-                                                  asio::error_code p_error) { self->handleReceive(std::move(p_packet), p_size, p_source, p_error); });
+  m_socket->asyncReceive(m_receive_packet, [weak_self](std::unique_ptr<UDPPacket> p_packet, uint32_t p_size, asio::ip::udp::endpoint p_source,
+                                                       asio::error_code p_error) {
+    std::shared_ptr<CUDP> self = weak_self.lock();
+    if (self)
+      self->handleReceive(std::move(p_packet), p_size, p_source, p_error);
+  });
 }
 
 } // namespace network
