@@ -1,6 +1,8 @@
 #include <network/CUDP.hpp>
 
 #include <utils/ScopeExit.hpp>
+
+#include <iostream>
 namespace cudp {
 namespace network {
 
@@ -155,8 +157,14 @@ void CUDP::handleReceive(std::unique_ptr<UDPPacket> p_packet, asio::ip::udp::end
     }
 
     // Send the next packet and start receiving again
-    trySendNext();
-    startReceive();
+    try {
+      trySendNext();
+      startReceive();
+    } catch (std::exception &e) {
+      std::cerr << "[CUDP] The socket reception re-arming thrown an exception: " << e.what() << std::endl;
+    } catch (...) {
+      std::cerr << "[CUDP] The socket reception re-arming thrown an unknown exception" << std::endl;
+    }
   });
 
   // Check that the receive operation went well
