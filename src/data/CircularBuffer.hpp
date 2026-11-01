@@ -34,6 +34,17 @@ public:
   }
 
   /**
+   * @brief Returns a snapshot of the number of queued elements
+   */
+  uint32_t count() {
+    std::scoped_lock l(m_buffer_mutex);
+    if (m_end_index >= m_start_index)
+      return m_end_index - m_start_index;
+
+    return static_cast<uint32_t>(m_buffer.size() - m_start_index + m_end_index);
+  }
+
+  /**
    * @brief Tries to emplace an element T that needs to be copyable.
    * The emplace operation might fail due to limited space inside the buffer
    */

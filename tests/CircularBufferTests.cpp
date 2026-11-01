@@ -20,20 +20,74 @@ TEST_CASE("CircularBuffer is empty after construction", "[CircularBuffer][dequeu
 TEST_CASE("CircularBuffer with zero capacity rejects every element", "[CircularBuffer][boundary]") {
   cudp::data::CircularBuffer<int> buffer(0);
 
+  REQUIRE(buffer.count() == 0);
   REQUIRE_FALSE(buffer.tryEnqueue(42));
   REQUIRE_FALSE(buffer.dequeue().has_value());
+  REQUIRE(buffer.count() == 0);
 }
 
 TEST_CASE("CircularBuffer with unit capacity stores exactly one element", "[CircularBuffer][boundary]") {
   cudp::data::CircularBuffer<int> buffer(1);
 
   REQUIRE(buffer.tryEnqueue(10));
+  REQUIRE(buffer.count() == 1);
   REQUIRE_FALSE(buffer.tryEnqueue(20));
+  REQUIRE(buffer.count() == 1);
 
   const std::optional<int> element = buffer.dequeue();
   REQUIRE(element.has_value());
   REQUIRE(*element == 10);
   REQUIRE_FALSE(buffer.dequeue().has_value());
+  REQUIRE(buffer.count() == 0);
+}
+
+TEST_CASE("CircularBuffer counts queued elements independently of capacity", "[CircularBuffer][count]") {
+  cudp::data::CircularBuffer<int> buffer(3);
+
+  REQUIRE(buffer.count() == 0);
+  REQUIRE_FALSE(buffer.dequeue().has_value());
+  REQUIRE(buffer.count() == 0);
+
+  REQUIRE(buffer.tryEnqueue(10));
+  REQUIRE(buffer.count() == 1);
+  REQUIRE(buffer.tryEnqueue(20));
+  REQUIRE(buffer.count() == 2);
+  REQUIRE(buffer.tryEnqueue(30));
+  REQUIRE(buffer.count() == 3);
+
+  REQUIRE_FALSE(buffer.tryEnqueue(40));
+  REQUIRE(buffer.peek() == 10);
+  REQUIRE(buffer.count() == 3);
+
+  REQUIRE(buffer.dequeue() == 10);
+  REQUIRE(buffer.count() == 2);
+  REQUIRE(buffer.dequeue() == 20);
+  REQUIRE(buffer.count() == 1);
+  REQUIRE(buffer.dequeue() == 30);
+  REQUIRE(buffer.count() == 0);
+  REQUIRE(buffer.size() == 3);
+}
+
+TEST_CASE("CircularBuffer counts elements across repeated index wraps", "[CircularBuffer][count][wrap-around]") {
+  cudp::data::CircularBuffer<int> buffer(3);
+
+  REQUIRE(buffer.tryEnqueue(10));
+  REQUIRE(buffer.tryEnqueue(20));
+
+  for (int value = 0; value < 12; ++value) {
+    REQUIRE(buffer.count() == 2);
+    REQUIRE(buffer.tryEnqueue(value));
+    REQUIRE(buffer.count() == 3);
+    REQUIRE_FALSE(buffer.tryEnqueue(value));
+    REQUIRE(buffer.count() == 3);
+    REQUIRE(buffer.dequeue().has_value());
+    REQUIRE(buffer.count() == 2);
+  }
+
+  REQUIRE(buffer.dequeue().has_value());
+  REQUIRE(buffer.count() == 1);
+  REQUIRE(buffer.dequeue().has_value());
+  REQUIRE(buffer.count() == 0);
 }
 
 TEST_CASE("CircularBuffer dequeues elements in FIFO order", "[CircularBuffer][fifo]") {
@@ -135,6 +189,7 @@ TEST_CASE("CircularBuffer serializes concurrent enqueue attempts", "[CircularBuf
 
   // Verify that independently on the number of used threads, the number of accepted enqueues is the buffer capacity
   REQUIRE(std::count(enqueue_results.begin(), enqueue_results.end(), true) == buffer_capacity);
+  REQUIRE(buffer.count() == buffer_capacity);
 
   std::array<bool, contender_count> dequeued_values{};
 
@@ -142,6 +197,7 @@ TEST_CASE("CircularBuffer serializes concurrent enqueue attempts", "[CircularBuf
     // Check that every dequeue has an element
     const std::optional<std::uint32_t> element = buffer.dequeue();
     REQUIRE(element.has_value());
+    REQUIRE(buffer.count() == buffer_capacity - index - 1);
 
     // Check that the element index (a.k.a. the thread that enqueued the data) is
     // compliant with the threads number
@@ -154,4 +210,5 @@ TEST_CASE("CircularBuffer serializes concurrent enqueue attempts", "[CircularBuf
 
   // Verify that after all the dequeues, the buffer does not contain any data
   REQUIRE_FALSE(buffer.dequeue().has_value());
+  REQUIRE(buffer.count() == 0);
 }
