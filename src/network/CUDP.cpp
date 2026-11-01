@@ -35,12 +35,8 @@ CUDP::ConnectionState::ConnectionState(std::shared_ptr<ConnectionHandler> p_hand
 CUDP::~CUDP() { close(); }
 
 bool CUDP::registerConnection(const asio::ip::udp::endpoint &p_endpoint, std::shared_ptr<ConnectionHandler> p_handler) {
-  // Socket is closed
-  if (m_closed)
-    return false;
-
-  // Handler is null
-  if (!p_handler)
+  // Socket is closed or handler is not valid to be initialized
+  if (m_closed || !p_handler || p_handler->isInit())
     return false;
 
   // Under mutex add the new connection
