@@ -111,6 +111,9 @@ bool CUDP::send(const asio::ip::udp::endpoint &p_destination, const uint8_t *p_d
     connection->m_next_send_buffer = (connection->m_next_send_buffer + 1) % connection->m_send_buffers.size();
   }
 
+  // Trigger a new send logic
+  trySendNext();
+
   return true;
 }
 
