@@ -10,10 +10,8 @@ std::optional<std::shared_ptr<CUDP>> CUDP::create(std::shared_ptr<Transceiver> p
   if (!p_transceiver || !p_new_connection_callback)
     return std::nullopt;
 
-  // IMPORTANT: Create a shared_ptr specifically using the new operator to avoid weak pointer holding
-  // its ownership on destruction. This leverages the difference between make_shared and shared_ptr(new ...)
-  // TODO: test that with a catch test
-  std::shared_ptr<CUDP> result = std::shared_ptr<CUDP>(new CUDP(p_transceiver, p_new_connection_callback));
+  // Create the CUDP instance and start the reception
+  std::shared_ptr<CUDP> result = std::make_shared<CUDP>(p_transceiver, p_new_connection_callback);
   result->startReceive();
 
   return result;
