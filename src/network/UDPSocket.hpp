@@ -56,14 +56,12 @@ public:
    * @param p_destination The message destination endpoint
    * @param p_tx_buffer The buffer to be used to take the data to transmit. The pointer is emptied only
    * if the operation is accepted
-   * @param p_size The amount of data to be sent (in bytes)
    * @param p_callback The function called on send completion. The function receives
    * the previously borrowed buffer and the asio error code produced by the operation
    * @return Result of the async send operation
    */
   [[nodiscard]] bool asyncSend(asio::ip::udp::endpoint p_destination,
                                std::unique_ptr<UDPPacket> &p_tx_buffer,
-                               uint32_t p_size,
                                std::function<void(std::unique_ptr<UDPPacket>, asio::error_code)> p_callback) override;
 
   /**

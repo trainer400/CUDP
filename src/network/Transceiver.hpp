@@ -48,7 +48,6 @@ public:
    */
   [[nodiscard]] virtual bool asyncSend(asio::ip::udp::endpoint p_destination,
                                        std::unique_ptr<UDPPacket> &p_tx_buffer,
-                                       uint32_t p_size,
                                        std::function<void(std::unique_ptr<UDPPacket>, asio::error_code)> p_callback) = 0;
 
   /**

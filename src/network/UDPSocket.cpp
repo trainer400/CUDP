@@ -24,10 +24,9 @@ bool UDPSocket::close() {
 
 bool UDPSocket::asyncSend(asio::ip::udp::endpoint p_destination,
                           std::unique_ptr<UDPPacket> &p_tx_buffer,
-                          uint32_t p_size,
                           std::function<void(std::unique_ptr<UDPPacket>, asio::error_code)> p_callback) {
   // Invalid input is rejected before borrowing the packet, so the caller keeps ownership
-  if (p_tx_buffer == nullptr || p_size > UDPPacket::MAX_UDP_PKT_SIZE)
+  if (p_tx_buffer == nullptr || p_tx_buffer->m_data_size > UDPPacket::MAX_UDP_PKT_SIZE)
     return false;
 
   // Gather the self shared_ptr
@@ -72,7 +71,7 @@ bool UDPSocket::asyncSend(asio::ip::udp::endpoint p_destination,
   // Send the packet if possible
   try {
     std::scoped_lock<std::mutex> l(m_socket_mutex);
-    m_socket.async_send_to(asio::buffer(m_send_packet->m_packet_data.data(), p_size), p_destination, callback);
+    m_socket.async_send_to(asio::buffer(m_send_packet->m_packet_data.data(), m_send_packet->m_data_size), p_destination, callback);
   } catch (const std::exception &) {
     // Asio rejected the start, restore caller ownership and mark the operation as inactive
     {
