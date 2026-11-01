@@ -48,7 +48,7 @@ bool CUDP::registerConnection(const asio::ip::udp::endpoint &p_endpoint, std::sh
   if (insertion_result.second)
     p_handler->init(p_endpoint, weak_from_this());
 
-  return true;
+  return insertion_result.second;
 }
 
 bool CUDP::unregisterConnection(const asio::ip::udp::endpoint &p_endpoint) {
