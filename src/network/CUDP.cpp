@@ -13,7 +13,7 @@ std::optional<std::shared_ptr<CUDP>> CUDP::create(std::shared_ptr<Transceiver> p
     return std::nullopt;
 
   // Create the CUDP instance and start the reception
-  std::shared_ptr<CUDP> result = std::make_shared<CUDP>(p_transceiver, p_new_connection_callback);
+  std::shared_ptr<CUDP> result = std::shared_ptr<CUDP>(new CUDP(p_transceiver, p_new_connection_callback));
   result->startReceive();
 
   return result;
@@ -21,7 +21,8 @@ std::optional<std::shared_ptr<CUDP>> CUDP::create(std::shared_ptr<Transceiver> p
 
 CUDP::CUDP(std::shared_ptr<Transceiver> p_transceiver, std::function<void(asio::ip::udp::endpoint)> p_new_connection_callback)
     : m_socket(p_transceiver)
-    , m_new_connection_callback(p_new_connection_callback) {
+    , m_new_connection_callback(p_new_connection_callback)
+    , m_ready_send_queue(MAX_CONNECTIONS_COUNT) {
   // Allocate the receive packet memory
   m_receive_packet = std::make_unique<UDPPacket>();
 }
@@ -34,7 +35,7 @@ CUDP::ConnectionState::ConnectionState(std::shared_ptr<ConnectionHandler> p_hand
   }
 }
 
-CUDP::~CUDP() { close(); }
+CUDP::~CUDP() { (void)close(); }
 
 bool CUDP::registerConnection(const asio::ip::udp::endpoint &p_endpoint, std::shared_ptr<ConnectionHandler> p_handler) {
   // Socket is closed or handler is not valid to be initialized

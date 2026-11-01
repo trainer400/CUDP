@@ -31,6 +31,7 @@ class CUDP final : public std::enable_shared_from_this<CUDP> {
 public:
   // Number of queued packet buffers reserved for each connection
   static constexpr uint32_t CONNECTION_BUFFER_COUNT = 32U;
+  static constexpr uint32_t MAX_CONNECTIONS_COUNT   = 1024;
 
   /**
    * @brief Creates the CUDP multiplexer and starts its continuous asynchronous receive
@@ -129,10 +130,10 @@ private:
   // Internal connection states
   std::mutex m_state_mutex;
   std::map<asio::ip::udp::endpoint, std::shared_ptr<ConnectionState>> m_connections;
+  data::CircularBuffer<std::shared_ptr<ConnectionState>> m_ready_send_queue;
 
-  // Round robin index that indicates the last connection that has sent data
-  std::size_t m_round_robin_index = 0U;
-  bool m_send_active              = false;
+  // Atomic flag that indicates a send operation currently active
+  std::atomic<bool> m_send_active = false;
 
   // RX buffer and associated mutex
   std::mutex m_receive_mutex;
