@@ -41,9 +41,19 @@ public:
    * @param p_cudp CUDP multiplexer instance needed by the handler
    */
   void init(const asio::ip::udp::endpoint &p_remote, std::weak_ptr<CUDP> p_cudp) {
+    // Check if the handler has already been initialized
+    bool expected_init_value = false;
+    if (!m_initialized.compare_exchange_strong(expected_init_value, true))
+      return;
+
     m_remote_endpoint = p_remote;
     m_cudp_mux        = p_cudp;
   }
+
+  /**
+   * @brief Returns if the object has already been initialized by the multiplexer
+   */
+  bool isInit() { return m_initialized; }
 
 protected:
   // CUDP instance that is used by the Connection Handler to send back messages
@@ -53,6 +63,10 @@ protected:
 
   // Remote endpoint associated with the current connection handler
   asio::ip::udp::endpoint m_remote_endpoint;
+
+private:
+  // Init flag that avoids multiple initializations
+  std::atomic<bool> m_initialized = false;
 };
 
 } // namespace network
