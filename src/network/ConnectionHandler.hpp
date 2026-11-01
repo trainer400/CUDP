@@ -3,6 +3,7 @@
 #include <asio.hpp>
 #include <cstdint>
 #include <memory>
+#include <optional>
 
 namespace cudp {
 namespace network {
@@ -54,6 +55,13 @@ public:
    * @brief Returns if the object has already been initialized by the multiplexer
    */
   bool isInit() { return m_initialized; }
+
+  /**
+   * @brief Returns the remote endpoint that has been assigned by the init function
+   */
+  std::optional<asio::ip::udp::endpoint> getRemoteEndpoint() {
+    return m_initialized ? std::optional<asio::ip::udp::endpoint>(m_remote_endpoint) : std::nullopt;
+  }
 
 protected:
   // CUDP instance that is used by the Connection Handler to send back messages
